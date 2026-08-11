@@ -16,14 +16,14 @@
         <!-- Header -->
         <div class="mb-8 text-center">
             <h1 class="text-2xl font-black text-gray-900">TikSnap Ultra</h1>
-            <p class="text-gray-500 text-sm">Light Mode UI - Direct Download</p>
+            <p class="text-gray-500 text-sm">Direct Download Mode</p>
         </div>
 
         <!-- Input Section -->
         <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 mb-6">
             <input type="text" id="urlInput" placeholder="TikTok လင့်ခ်ကို ကူးထည့်ပါ..." 
                 class="w-full p-4 bg-gray-50 rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-400 transition-all mb-4 text-sm">
-            <button id="mainBtn" onclick="handleDownload()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all cursor-pointer">
+            <button id="mainBtn" onclick="handleDownload()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 transition-all cursor-pointer active:scale-95">
                 ဒေတာ ရယူမည်
             </button>
         </div>
@@ -45,15 +45,15 @@
                 </div>
             </div>
 
-            <!-- Video Section (No Preview, Direct Download) -->
+            <!-- Video Section (Direct Download Button) -->
             <div id="videoSection" class="hidden bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                 <div class="flex justify-between items-center mb-4">
                     <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">VIDEO FILE</span>
                     <span class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">HD Quality</span>
                 </div>
-                <button onclick="triggerDirectDownload(currentVideoUrl, 'tiktok_video_' + Date.now() + '.mp4')" 
+                <button onclick="forceDownload(currentVideoUrl, 'tiktok_video_' + Date.now() + '.mp4')" 
                     class="w-full bg-green-600 hover:bg-green-500 text-white py-4 rounded-2xl font-bold active:scale-95 transition-all shadow-lg shadow-green-100 flex items-center justify-center space-x-2 cursor-pointer">
-                    <span>ဗီဒီယို ဒေါင်းလုဒ်လုပ်မည်</span>
+                    <span>ဗီဒီယို တိုက်ရိုက် ဒေါင်းလုဒ်လုပ်မည်</span>
                 </button>
             </div>
 
@@ -118,7 +118,7 @@
                                     <div class="w-full h-44 rounded-xl overflow-hidden bg-gray-100 mb-3">
                                         <img src="${imgUrl}" class="w-full h-full object-cover">
                                     </div>
-                                    <button onclick="triggerDirectDownload('${imgUrl}', 'tiktok_photo_${i+1}_${Date.now()}.jpg')" 
+                                    <button onclick="forceDownload('${imgUrl}', 'tiktok_photo_${i+1}_${Date.now()}.jpg')" 
                                         class="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-3 rounded-xl transition-all cursor-pointer active:scale-95">
                                         ဒေါင်းလုဒ်
                                     </button>
@@ -135,15 +135,34 @@
             }
         }
 
-        // Preview လုံးဝမပြဘဲ Sketchware DownloadListener သို့ တိုက်ရိုက်ပို့ပေးမည့် Function
-        function triggerDirectDownload(fileUrl, filename) {
-            const a = document.createElement('a');
-            a.href = fileUrl;
-            a.setAttribute('download', filename);
-            a.setAttribute('target', '_blank');
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+        // Preview လုံးဝမပြဘဲ WebView DownloadListener ကို အဓိက Trigger လုပ်ပေးမည့် Function အသစ်
+        async function forceDownload(fileUrl, filename) {
+            try {
+                // Fetch blob ကို တိုက်ရိုက်ဆွဲပြီး WebView ရဲ့ DownloadListener ဆီသို့ URL အနေနဲ့ ပို့ပေးခြင်း
+                const response = await fetch(fileUrl);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(blobUrl);
+                }, 100);
+            } catch (err) {
+                // Fallback direct window location if CORS restricted
+                const a = document.createElement('a');
+                a.href = fileUrl;
+                a.setAttribute('download', filename);
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
         }
     </script>
 </body>
